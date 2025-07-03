@@ -357,8 +357,10 @@
     resizeCanvasForHiDPI();
 
     function drawFruit(fruit) {
+      const logicWidth = canvas.clientWidth;
+      const logicHeight = canvas.clientHeight;
       let radius = fruitRadius[fruit.type];
-      let y = Math.max(radius, Math.min(canvas.height - radius, fruit.y));
+      let y = Math.max(radius, Math.min(logicHeight - radius, fruit.y));
       if (fruit.mergeAnim && fruit.mergeAnim > 0) {
         radius *= 1 + 0.5 * fruit.mergeAnim;
       }
@@ -392,6 +394,9 @@
     }
 
     function updatePhysics(fruit, isCurrent) {
+      // 논리 크기 기준
+      const logicWidth = canvas.clientWidth;
+      const logicHeight = canvas.clientHeight;
       // 중력 및 이동 적용 (가장 먼저!)
       fruit.vy += GRAVITY;
       fruit.x += fruit.vx;
@@ -418,8 +423,10 @@
             other.x -= Math.cos(angle) * (overlap * otherMoveRatio);
             other.y -= Math.sin(angle) * (overlap * otherMoveRatio);
             // 표면 접선 방향으로 vx에 vy를 적당히 변환 (최소/최대값 clamp)
+            const tangent = angle + Math.PI / 2;
             const transfer = 0.05; // 훨씬 더 느리게
             const sign = Math.sign(dx) || 1;
+            // 표면 미끄러짐/착지 조건 개선
             if (fruit.y > other.y) {
               fruit.vy = 0;
               if (Math.abs(fruit.vx) < 0.15) {
@@ -470,8 +477,8 @@
         }
       }
       // 바닥 충돌
-      if (!onSurface && fruit.y + fruitRadius[fruit.type] > canvas.height) {
-        fruit.y = canvas.height - fruitRadius[fruit.type];
+      if (!onSurface && fruit.y + fruitRadius[fruit.type] > logicHeight) {
+        fruit.y = logicHeight - fruitRadius[fruit.type];
         // 바닥에 착지하는 순간에만 바운스 효과 적용
         if (fruit.vy > 0.5) {
           fruit.vy = -fruit.vy * BOUNCE * 1.2;
@@ -497,8 +504,8 @@
           if (isCurrent) return true;
         }
       }
-      if (fruit.x + fruitRadius[fruit.type] > canvas.width) {
-        fruit.x = canvas.width - fruitRadius[fruit.type];
+      if (fruit.x + fruitRadius[fruit.type] > logicWidth) {
+        fruit.x = logicWidth - fruitRadius[fruit.type];
         fruit.vx *= -BOUNCE * 0.5; // 감쇠 더 강하게
         if (Math.abs(fruit.vx) < 0.3 && Math.abs(fruit.vy) < 0.3) {
           fruit.vx = 0;
@@ -581,14 +588,14 @@
       if (Math.abs(fruit.vx) < 0.1) fruit.vx = 0;
       if (Math.abs(fruit.vy) < 0.1) fruit.vy = 0;
       // 멈춤 판정 (조금 더 완화)
-      if (Math.abs(fruit.vx) < 0.05 && Math.abs(fruit.vy) < 0.05 && fruit.y + fruitRadius[fruit.type] >= canvas.height - 1) {
+      if (Math.abs(fruit.vx) < 0.05 && Math.abs(fruit.vy) < 0.05 && fruit.y + fruitRadius[fruit.type] >= logicHeight - 1) {
         fruit.vx = 0;
         fruit.vy = 0;
         fruit.stopped = true;
       }
       // 겹침 해소/위치 보정 직후, return false 직전에만 clamp 유지
-      if (fruit.y + fruitRadius[fruit.type] > canvas.height) {
-        fruit.y = canvas.height - fruitRadius[fruit.type];
+      if (fruit.y + fruitRadius[fruit.type] > logicHeight) {
+        fruit.y = logicHeight - fruitRadius[fruit.type];
         if (fruit.vy > 0) fruit.vy = 0;
       }
       // 바닥에서 vx 감쇠/고정
@@ -782,6 +789,7 @@
 
     // 게임 오버 체크(레이어로 표시)
     function checkGameOver() {
+      const logicHeight = canvas.clientHeight;
       for (const fruit of fruits) {
         if (fruit.y - fruitRadius[fruit.type] < 0) {
           isGameOver = true;
