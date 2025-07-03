@@ -1,0 +1,881 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <title>수박게임</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.css" rel="stylesheet"/>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Pretendard:wght@400;700&family=Noto+Sans+KR:wght@400;700&display=swap');
+    body {
+      min-height: 100vh;
+      margin: 0;
+      font-family: 'Pretendard', 'Noto Sans KR', Arial, sans-serif;
+      background: linear-gradient(135deg, #f9e7fe 0%, #b2e6ff 100%);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .container {
+      max-width: 420px;
+      margin: 32px auto;
+      background: rgba(255,255,255,0.85);
+      border-radius: 24px;
+      box-shadow: 0 4px 24px #b2e6ff88, 0 1.5px 8px #f9e7fe44;
+      padding: 32px 18px 20px 18px;
+      position: relative;
+    }
+    h1 {
+      text-align: center;
+      color: #7d5fff;
+      margin-bottom: 12px;
+      font-size: 2.1em;
+      letter-spacing: 1px;
+      font-family: 'Pretendard', 'Noto Sans KR', Arial, sans-serif;
+      text-shadow: 0 2px 8px #b2e6ff55;
+    }
+    .scoreboard {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 18px;
+      background: rgba(186, 230, 253, 0.45);
+      border-radius: 16px;
+      box-shadow: 0 1.5px 8px #b2e6ff33;
+      padding: 10px 18px;
+      font-size: 1.1em;
+    }
+    .score {
+      font-size: 1.25em;
+      font-weight: bold;
+      color: #00b894;
+      letter-spacing: 0.5px;
+      text-shadow: 0 1px 4px #fff8;
+    }
+    .reset-btn {
+      background: linear-gradient(90deg, #f9e7fe 0%, #b2e6ff 100%);
+      color: #7d5fff;
+      border: none;
+      border-radius: 12px;
+      padding: 8px 22px;
+      font-size: 1.05em;
+      font-weight: bold;
+      cursor: pointer;
+      box-shadow: 0 2px 8px #b2e6ff33;
+      transition: background 0.2s, color 0.2s, transform 0.1s;
+    }
+    .reset-btn:hover, .reset-btn:active {
+      background: linear-gradient(90deg, #b2e6ff 0%, #f9e7fe 100%);
+      color: #00b894;
+      transform: scale(1.06);
+    }
+    #gameCanvas {
+      display: block;
+      margin: 0 auto;
+      background: linear-gradient(180deg, #f9e7fe 0%, #b2e6ff 100%);
+      border-radius: 24px;
+      box-shadow: 0 4px 24px #b2e6ff55, 0 1.5px 8px #f9e7fe33;
+      border: 2.5px solid #b2e6ff;
+      transition: box-shadow 0.2s;
+    }
+    #gameCanvas:active {
+      box-shadow: 0 2px 8px #b2e6ff88;
+    }
+    @media (max-width: 500px) {
+      .container { max-width: 98vw; padding: 8vw 2vw; }
+      #gameCanvas { width: 96vw !important; height: 120vw !important; }
+    }
+    #gameOverLayer {
+      position: absolute;
+      left: 0; top: 0; right: 0; bottom: 0;
+      width: 100%; height: 100%;
+      background: rgba(186,230,253,0.75);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 10;
+      border-radius: 24px;
+      box-shadow: 0 4px 24px #b2e6ff88, 0 1.5px 8px #f9e7fe44;
+      transition: background 0.3s;
+    }
+    .gameover-content {
+      background: rgba(255,255,255,0.95);
+      border-radius: 20px;
+      box-shadow: 0 2px 12px #b2e6ff55;
+      padding: 36px 32px 28px 32px;
+      text-align: center;
+      min-width: 220px;
+    }
+    .gameover-title {
+      font-size: 2em;
+      color: #7d5fff;
+      font-weight: bold;
+      margin-bottom: 12px;
+      letter-spacing: 1px;
+      text-shadow: 0 2px 8px #b2e6ff33;
+    }
+    .gameover-score {
+      font-size: 1.2em;
+      color: #00b894;
+      margin-bottom: 18px;
+      font-weight: bold;
+      text-shadow: 0 1px 4px #fff8;
+    }
+    .gameover-btn {
+      background: linear-gradient(90deg, #f9e7fe 0%, #b2e6ff 100%);
+      color: #7d5fff;
+      border: none;
+      border-radius: 12px;
+      padding: 10px 32px;
+      font-size: 1.1em;
+      font-weight: bold;
+      cursor: pointer;
+      box-shadow: 0 2px 8px #b2e6ff33;
+      transition: background 0.2s, color 0.2s, transform 0.1s;
+    }
+    .gameover-btn:hover, .gameover-btn:active {
+      background: linear-gradient(90deg, #b2e6ff 0%, #f9e7fe 100%);
+      color: #00b894;
+      transform: scale(1.06);
+    }
+    .custom-img-bar {
+      width: 100%;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      margin-top: 12px;
+      margin-bottom: 2px;
+    }
+    .custom-img-text {
+      color: #7d5fff;
+      font-size: 1.08em;
+      font-weight: bold;
+      cursor: pointer;
+      text-align: center;
+      text-decoration: underline dotted #b2e6ff;
+      padding: 6px 0;
+      transition: color 0.2s;
+      user-select: none;
+    }
+    .custom-img-text:hover, .custom-img-text:active {
+      color: #00b894;
+      text-decoration: underline solid #00b894;
+    }
+    @media (max-width: 500px) {
+      .custom-img-bar { margin-top: 8vw; }
+      .custom-img-text { font-size: 1em; padding: 8px 10vw; }
+    }
+    /* 크롭 모달 스타일 */
+    #cropModal {
+      position: fixed;
+      left: 0; top: 0; right: 0; bottom: 0;
+      width: 100vw; height: 100vh;
+      background: rgba(186,230,253,0.85);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+    }
+    .cropper-container {
+      border-radius: 20px;
+      box-shadow: 0 4px 24px #b2e6ff88, 0 1.5px 8px #f9e7fe44;
+      background: #fff;
+      padding: 18px 18px 32px 18px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      position: relative;
+      padding-bottom: 32px;
+    }
+    #cropImage {
+      max-width: 40vw;
+      max-height: 32vh;
+      border-radius: 16px;
+      margin-bottom: 12px;
+      background: #fff;
+    }
+    .crop-btn {
+      background: linear-gradient(90deg, #f9e7fe 0%, #b2e6ff 100%);
+      color: #7d5fff;
+      border: none;
+      border-radius: 12px;
+      padding: 8px 28px;
+      font-size: 1.08em;
+      font-weight: bold;
+      cursor: pointer;
+      box-shadow: 0 2px 8px #b2e6ff33;
+      transition: background 0.2s, color 0.2s, transform 0.1s;
+      margin: 0 8px;
+    }
+    .crop-btn:hover, .crop-btn:active {
+      background: linear-gradient(90deg, #b2e6ff 0%, #f9e7fe 100%);
+      color: #00b894;
+      transform: scale(1.04);
+    }
+    .crop-step {
+      color: #7d5fff;
+      font-size: 1.05em;
+      font-weight: bold;
+      margin-bottom: 8px;
+      text-align: center;
+    }
+    .crop-btn-bar {
+      display: flex;
+      justify-content: center;
+      margin-top: 12px;
+      z-index: 20;
+      width: 100%;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>💖심심할때 수박게임💖</h1>
+    <div class="scoreboard">
+      <span class="score">점수: <span id="score">0</span></span>
+      <button class="reset-btn" onclick="resetGame()">리셋</button>
+    </div>
+    <canvas id="gameCanvas" width="360" height="450"></canvas>
+    <div class="custom-img-bar">
+      <span id="toggleCustomImgText" class="custom-img-text" onclick="toggleCustomImgMode()">내가 원하는 사진으로 플레이하기</span>
+      <input type="file" id="customImgInput" accept="image/*" multiple style="display:none" onchange="handleCustomImgUpload(event)">
+    </div>
+    <div id="gameOverLayer" style="display:none;">
+      <div class="gameover-content">
+        <div class="gameover-title">게임 오버!</div>
+        <div class="gameover-score">점수: <span id="finalScore">0</span></div>
+        <button class="gameover-btn" onclick="resetGame()">다시 시작</button>
+      </div>
+    </div>
+  </div>
+  <div id="cropModal">
+    <div class="cropper-container">
+      <div class="crop-step" id="cropStepText"></div>
+      <img id="cropImage" src="" alt="Crop" />
+      <div class="crop-btn-bar">
+        <button class="crop-btn" onclick="applyCrop()">적용</button>
+        <button class="crop-btn" onclick="skipCrop()">건너뛰기</button>
+      </div>
+    </div>
+  </div>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.js"></script>
+  <script>
+    // 기본 과일 이미지(색상 원으로 대체)
+    const fruitColors = ["#f7e967", "#f9b233", "#ff7f50", "#ff4e50", "#a3e048", "#4ecdc4", "#3aaf85", "#2e86de", "#8e44ad", "#2d3436"];
+    const fruitNames = ["체리", "귤", "자두", "복숭아", "사과", "배", "포도", "멜론", "참외", "수박"];
+    const fruitEmojis = ["🍒", "🥝", "🍊", "🍅", "🍑", "🍎", "🍐", "🍇", "🍈", "🍉"];
+    const minRadius = 12;
+    const fruitRadius = [
+      minRadius, // 1단계
+      minRadius * 2, // 2단계(2배)
+      minRadius * 2 * 1.7, // 3단계(1.7배)
+      minRadius * 2 * 1.7 * 1.5, // 4단계(1.5배)
+      minRadius * 2 * 1.7 * 1.5 * 1.3, // 5단계(1.3배)
+      minRadius * 2 * 1.7 * 1.5 * 1.3 * 1.2, // 6단계(1.2배)
+      minRadius * 2 * 1.7 * 1.5 * 1.3 * 1.2 * 1.2, // 7단계(1.2배)
+      minRadius * 2 * 1.7 * 1.5 * 1.3 * 1.2 * 1.2 * 1.2, // 8단계(1.2배)
+      minRadius * 2 * 1.7 * 1.5 * 1.3 * 1.2 * 1.2 * 1.2 * 1.2, // 9단계(1.2배)
+      minRadius * 2 * 1.7 * 1.5 * 1.3 * 1.2 * 1.2 * 1.2 * 1.2 * 1.2 // 10단계(1.2배)
+    ];
+    const GRAVITY = 0.5;
+    const FRICTION = 0.97;
+    const BOUNCE = 0.4;
+    const STOP_VELOCITY = 0.8;
+    const canvas = document.getElementById('gameCanvas');
+    const ctx = canvas.getContext('2d');
+    let fruits = [];
+    let currentFruit = null;
+    let score = 0;
+    let isGameOver = false;
+    let mergeCooldown = false;
+    let mergeFruitsPending = false;
+    // 커스텀 이미지 모드 상태 및 이미지 저장
+    let customFruitImages = Array(10).fill(null); // 각 과일 타입별 이미지 객체
+    let useCustomImages = false;
+    // 크롭 관련 변수
+    let cropper = null;
+    let cropFiles = [];
+    let cropIdx = 0;
+    let cropImgs = Array(10).fill(null);
+
+    function drawFruit(fruit) {
+      let radius = fruitRadius[fruit.type];
+      let y = Math.max(radius, Math.min(canvas.height - radius, fruit.y));
+      if (fruit.mergeAnim && fruit.mergeAnim > 0) {
+        radius *= 1 + 0.5 * fruit.mergeAnim;
+      }
+      ctx.save();
+      ctx.translate(fruit.x, y);
+      ctx.rotate(fruit.angle || 0);
+      if (useCustomImages && customFruitImages[fruit.type]) {
+        // 원형 마스킹 후 이미지 그리기
+        ctx.save();
+        ctx.beginPath();
+        ctx.arc(0, 0, radius, 0, Math.PI * 2);
+        ctx.closePath();
+        ctx.clip();
+        ctx.drawImage(customFruitImages[fruit.type], -radius, -radius, radius * 2, radius * 2);
+        ctx.restore();
+      } else {
+        ctx.font = `${radius * 2}px serif`;
+        ctx.textAlign = "center";
+        ctx.textBaseline = "middle";
+        ctx.fillText(fruitEmojis[fruit.type], 0, 0);
+      }
+      ctx.restore();
+    }
+
+    function draw() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      for (const fruit of fruits) drawFruit(fruit);
+      if (currentFruit) drawFruit(currentFruit);
+    }
+
+    function updatePhysics(fruit, isCurrent) {
+      // 중력 및 이동 적용 (가장 먼저!)
+      fruit.vy += GRAVITY;
+      fruit.x += fruit.vx;
+      fruit.y += fruit.vy;
+      // stopped 상태여도 겹침 해소 반응은 항상 실행 (여러 번 반복)
+      for (let rep = 0; rep < 20; rep++) {
+        for (const other of fruits) {
+          if (other === fruit) continue;
+          const dx = fruit.x - other.x;
+          const dy = fruit.y - other.y;
+          const dist = Math.sqrt(dx*dx + dy*dy);
+          const minDist = fruitRadius[fruit.type] + fruitRadius[other.type];
+          if (dist < minDist && dist > 0.01) {
+            // 겹침 해소(상호작용 발생)
+            const angle = Math.atan2(dy, dx);
+            const overlap = minDist - dist;
+            const totalMass = fruit.mass + other.mass;
+            const fruitMoveRatio = other.mass / totalMass;
+            const otherMoveRatio = fruit.mass / totalMass;
+            const moveX = Math.cos(angle) * (overlap * fruitMoveRatio);
+            const moveY = Math.sin(angle) * (overlap * fruitMoveRatio);
+            fruit.x += moveX;
+            fruit.y += moveY;
+            other.x -= Math.cos(angle) * (overlap * otherMoveRatio);
+            other.y -= Math.sin(angle) * (overlap * otherMoveRatio);
+            // 표면 접선 방향으로 vx에 vy를 적당히 변환 (최소/최대값 clamp)
+            const transfer = 0.05; // 훨씬 더 느리게
+            const sign = Math.sign(dx) || 1;
+            if (fruit.y > other.y) {
+              fruit.vy = 0;
+              if (Math.abs(fruit.vx) < 0.15) {
+                fruit.vx += sign * transfer;
+              }
+              const maxVX = 0.2;
+              if (fruit.vx > maxVX) fruit.vx = maxVX;
+              if (fruit.vx < -maxVX) fruit.vx = -maxVX;
+              // 착지 판정은 하지 않음 (계속 표면 미끄러짐)
+            } else {
+              if (fruit.vy === 0) {
+                fruit.vy = 2;
+              }
+              if (isCurrent) return true;
+            }
+          }
+        }
+      }
+      let onSurface = false;
+      if (!isCurrent) { // currentFruit에는 표면 멈춤 로직 적용하지 않음
+        for (const other of fruits) {
+          if (other === fruit || !other.stopped) continue;
+          const dx = fruit.x - other.x;
+          const dy = fruit.y - other.y;
+          const dist = Math.sqrt(dx*dx + dy*dy);
+          const minDist = fruitRadius[fruit.type] + fruitRadius[other.type];
+          if (
+            dist < minDist + 0.5 &&
+            fruit.y + fruitRadius[fruit.type] >= other.y - fruitRadius[other.type] &&
+            fruit.y < other.y &&
+            fruit.vy > 0 &&
+            fruit.vy < 1.5
+          ) {
+            // 표면 위에 올려놓기
+            const angle = Math.atan2(dy, dx);
+            fruit.x = other.x + Math.cos(angle) * minDist;
+            fruit.y = other.y + Math.sin(angle) * minDist;
+            fruit.vy = 0; // vy를 무조건 0으로 고정
+            fruit.vx *= FRICTION;
+            onSurface = true;
+            if (Math.abs(fruit.vx) < 0.05 && Math.abs(fruit.vy) < 0.05) {
+              fruit.vx = 0;
+              fruit.vy = 0;
+              fruit.stopped = true;
+            }
+            break;
+          }
+        }
+      }
+      // 바닥 충돌
+      if (!onSurface && fruit.y + fruitRadius[fruit.type] > canvas.height) {
+        fruit.y = canvas.height - fruitRadius[fruit.type];
+        // 바닥에 착지하는 순간에만 바운스 효과 적용
+        if (fruit.vy > 0.5) {
+          fruit.vy = -fruit.vy * BOUNCE * 1.2;
+        } else {
+          fruit.vy = 0;
+        }
+        fruit.vx *= FRICTION;
+        if (Math.abs(fruit.vy) < 0.2 && Math.abs(fruit.vx) < 0.2) {
+          fruit.vx = 0;
+          fruit.vy = 0;
+          fruit.stopped = true;
+          if (isCurrent) return true;
+        }
+      }
+      // 벽 충돌 (왼쪽/오른쪽) - 마지막에 한 번 더 보정
+      if (fruit.x - fruitRadius[fruit.type] < 0) {
+        fruit.x = fruitRadius[fruit.type];
+        fruit.vx *= -BOUNCE * 0.5; // 감쇠 더 강하게
+        if (Math.abs(fruit.vx) < 0.3 && Math.abs(fruit.vy) < 0.3) {
+          fruit.vx = 0;
+          fruit.vy = 0;
+          fruit.stopped = true;
+          if (isCurrent) return true;
+        }
+      }
+      if (fruit.x + fruitRadius[fruit.type] > canvas.width) {
+        fruit.x = canvas.width - fruitRadius[fruit.type];
+        fruit.vx *= -BOUNCE * 0.5; // 감쇠 더 강하게
+        if (Math.abs(fruit.vx) < 0.3 && Math.abs(fruit.vy) < 0.3) {
+          fruit.vx = 0;
+          fruit.vy = 0;
+          fruit.stopped = true;
+          if (isCurrent) return true;
+        }
+      }
+      // 캔버스 상단도 벗어나지 않게
+      if (fruit.y - fruitRadius[fruit.type] < 0) {
+        fruit.y = fruitRadius[fruit.type];
+        fruit.vy = 0;
+      }
+      // 다른 과일과 충돌
+      for (const other of fruits) {
+        if (other === fruit) continue;
+        // 멈춘 과일이면 속도 전달/교환하지 않음
+        if (fruit.stopped || other.stopped) continue;
+        const dx = fruit.x - other.x;
+        const dy = fruit.y - other.y;
+        const dist = Math.sqrt(dx*dx + dy*dy);
+        const minDist = fruitRadius[fruit.type] + fruitRadius[other.type];
+        if (dist < minDist) {
+          // 겹침 해소(항상)
+          const angle = Math.atan2(dy, dx);
+          const overlap = minDist - dist;
+          const totalMass = fruit.mass + other.mass;
+          const fruitMoveRatio = other.mass / totalMass;
+          const otherMoveRatio = fruit.mass / totalMass;
+          const moveX = Math.cos(angle) * (overlap * fruitMoveRatio);
+          const moveY = Math.sin(angle) * (overlap * fruitMoveRatio);
+          console.log('겹침해소', {fruitType: fruit.type, otherType: other.type, fruitMass: fruit.mass, otherMass: other.mass, moveX, moveY, fruitX: fruit.x, otherX: other.x});
+          fruit.x += moveX;
+          fruit.y += moveY;
+          other.x -= Math.cos(angle) * (overlap * otherMoveRatio);
+          other.y -= Math.sin(angle) * (overlap * otherMoveRatio);
+          // 속도 교환(간단) - 멈춘 과일은 제외
+          if (!(fruit.stopped || other.stopped)) {
+            // 운동량 보존 기반 속도 분배
+            const newVx1 = (fruit.vx * (fruit.mass - other.mass) + 2 * other.mass * other.vx) / totalMass;
+            const newVx2 = (other.vx * (other.mass - fruit.mass) + 2 * fruit.mass * fruit.vx) / totalMass;
+            fruit.vx = newVx1;
+            other.vx = newVx2;
+            // vy도 동일하게 적용 가능
+            const newVy1 = (fruit.vy * (fruit.mass - other.mass) + 2 * other.mass * other.vy) / totalMass;
+            const newVy2 = (other.vy * (other.mass - fruit.mass) + 2 * fruit.mass * fruit.vy) / totalMass;
+            fruit.vy = newVy1;
+            other.vy = newVy2;
+          } else if (other.stopped) {
+            // 작은 과일이 멈춰 있을 때, 큰 과일이 작은 과일을 밀고 함께 굴러가게
+            other.vx = fruit.vx * 0.9;
+            fruit.vx *= 0.9;
+          }
+          // 충분히 느려지면 멈춤
+          if (Math.abs(fruit.vy) < 0.5 && Math.abs(fruit.vx) < 0.5) {
+            fruit.vy = 0;
+            fruit.vx = 0;
+            fruit.stopped = true;
+          }
+          if (isCurrent && fruit.stopped) return true;
+        }
+        // 겹침 해소(위치 보정)에서 질량이 큰 과일이 아래에 오도록 보정
+        if (fruit.mass > other.mass && fruit.y < other.y) {
+          // 큰 과일이 위에 있고, 작은 과일이 아래에 있으면 위치를 바꿔줌
+          const tempY = fruit.y;
+          fruit.y = other.y;
+          other.y = tempY;
+        }
+      }
+      // 마찰 적용
+      fruit.vx *= FRICTION;
+      fruit.vy *= FRICTION;
+      // 회전 속도 및 각도 업데이트 (vx에 비례)
+      fruit.angularVelocity = fruit.vx / (fruitRadius[fruit.type] * 0.7); // 반지름에 비례, 0.7은 튜닝값
+      fruit.angle += fruit.angularVelocity;
+      // angle 값이 너무 커지지 않게 -파이~파이 범위로 유지
+      if (fruit.angle > Math.PI) fruit.angle -= 2 * Math.PI;
+      if (fruit.angle < -Math.PI) fruit.angle += 2 * Math.PI;
+      // vx, vy가 충분히 작으면 0으로 고정 (진동 방지, 더 엄격하게)
+      if (Math.abs(fruit.vx) < 0.1) fruit.vx = 0;
+      if (Math.abs(fruit.vy) < 0.1) fruit.vy = 0;
+      // 멈춤 판정 (조금 더 완화)
+      if (Math.abs(fruit.vx) < 0.05 && Math.abs(fruit.vy) < 0.05 && fruit.y + fruitRadius[fruit.type] >= canvas.height - 1) {
+        fruit.vx = 0;
+        fruit.vy = 0;
+        fruit.stopped = true;
+      }
+      // 겹침 해소/위치 보정 직후, return false 직전에만 clamp 유지
+      if (fruit.y + fruitRadius[fruit.type] > canvas.height) {
+        fruit.y = canvas.height - fruitRadius[fruit.type];
+        if (fruit.vy > 0) fruit.vy = 0;
+      }
+      // 바닥에서 vx 감쇠/고정
+      fruit.vx *= 0.97;
+      if (Math.abs(fruit.vx) < 0.01) fruit.vx = 0;
+      // vy==0이어도 vx는 0으로 만들지 않음
+      let wasOnSurface = fruit.wasOnSurfaceLastFrame || false;
+      fruit.wasOnSurfaceLastFrame = onSurface;
+      if (!onSurface && wasOnSurface) {
+        // 직전 프레임에 표면에 있었고, 이번 프레임에 떨어진 경우
+        const minVX = 0.5;
+        const sign = Math.sign(fruit.vx) || 1;
+        fruit.vx += sign * minVX;
+        if (fruit.vy > 2) fruit.vy = 2;
+      }
+      return false;
+    }
+
+    function gameLoop() {
+      // currentFruit 물리 적용
+      if (currentFruit) {
+        if (currentFruit.dropping) {
+          const landed = updatePhysics(currentFruit, true);
+          if (landed) {
+            fruits.push(currentFruit);
+            currentFruit = null;
+            mergeFruitsPending = true;
+            setTimeout(spawnFruit, 400);
+          }
+        }
+      }
+      // 기존 과일 물리 적용 및 합체 애니메이션 처리
+      for (const fruit of fruits) {
+        updatePhysics(fruit, false);
+        if (fruit.mergeAnim && fruit.mergeAnim > 0) {
+          fruit.mergeAnim -= 0.08;
+          if (fruit.mergeAnim < 0) fruit.mergeAnim = 0;
+        }
+      }
+      draw();
+      // 연쇄 합체 프레임 분리
+      if (mergeFruitsPending || mergeFruits()) {
+        mergeFruitsPending = false;
+        requestAnimationFrame(gameLoop);
+        return;
+      }
+      requestAnimationFrame(gameLoop);
+    }
+
+    function spawnFruit() {
+      if (isGameOver) return;
+      currentFruit = {
+        x: canvas.width / 2,
+        y: fruitRadius[0],
+        type: 0,
+        vx: 0,
+        vy: 2,
+        stopped: false,
+        dropping: false, // 드래그 끝나면 true로 변경
+        mass: fruitRadius[0] * fruitRadius[0],
+        wasOnSurfaceLastFrame: false,
+        angle: 0,
+        angularVelocity: 0
+      };
+      draw();
+    }
+
+    function mergeFruits() {
+      if (mergeCooldown) return false;
+      console.log('mergeFruits 호출', fruits, currentFruit);
+      for (let i = 0; i < fruits.length; i++) {
+        for (let j = i + 1; j < fruits.length; j++) {
+          if (fruits[i].type === fruits[j].type) {
+            console.log('강제 합체!', fruits[i], fruits[j]);
+            const newType = fruits[i].type + 1;
+            if (newType >= fruitRadius.length) continue;
+            // 두 과일의 접점(충돌 위치) 계산
+            const dx = fruits[i].x - fruits[j].x;
+            const dy = fruits[i].y - fruits[j].y;
+            const dist = Math.sqrt(dx*dx + dy*dy);
+            if (dist < fruitRadius[fruits[i].type] + fruitRadius[fruits[j].type] + 8) {
+              // 합체 직전, 기존 두 과일에 반대 방향 속도 살짝 부여
+              const angle = Math.atan2(dy, dx);
+              const bounceSpeed = 1;
+              const maxBounce = 2;
+              fruits[i].vx = Math.max(-maxBounce, Math.min(maxBounce, Math.cos(angle) * bounceSpeed));
+              fruits[i].vy = Math.max(-maxBounce, Math.min(maxBounce, Math.sin(angle) * bounceSpeed));
+              fruits[j].vx = Math.max(-maxBounce, Math.min(maxBounce, -Math.cos(angle) * bounceSpeed));
+              fruits[j].vy = Math.max(-maxBounce, Math.min(maxBounce, -Math.sin(angle) * bounceSpeed));
+              // 새로 만들어진 과일의 속도는 평균의 1/24로 천천히
+              const upper = fruits[i].y < fruits[j].y ? fruits[i] : fruits[j];
+              const lower = fruits[i].y > fruits[j].y ? fruits[i] : fruits[j];
+              const newFruit = {
+                x: fruits[i].x,
+                y: fruits[i].y,
+                type: newType,
+                vx: 0,
+                vy: 2,
+                stopped: false,
+                dropping: true,
+                mergeAnim: 1.0,
+                mass: fruitRadius[newType] * fruitRadius[newType],
+                wasOnSurfaceLastFrame: false,
+                angle: 0,
+                angularVelocity: 0
+              };
+              newFruit.x = Math.max(fruitRadius[newType], Math.min(canvas.width - fruitRadius[newType], newFruit.x));
+              newFruit.y = Math.max(fruitRadius[newType], Math.min(canvas.height - fruitRadius[newType], newFruit.y));
+              if (j > i) {
+                fruits.splice(j, 1);
+                fruits.splice(i, 1);
+              } else {
+                fruits.splice(i, 1);
+                fruits.splice(j, 1);
+              }
+              fruits.push(newFruit);
+              score += (newType + 1) * 10;
+              document.getElementById('score').textContent = score;
+              draw();
+              mergeCooldown = true;
+              setTimeout(() => { mergeCooldown = false; }, 600); // 600ms 쿨타임
+              return true;
+            }
+          }
+        }
+      }
+      return false;
+    }
+
+    // 마우스/터치로 과일 위치 조정(드래그)
+    let dragging = false;
+    canvas.addEventListener('mousedown', e => {
+      if (!currentFruit || currentFruit.dropping) return;
+      dragging = true;
+    });
+    canvas.addEventListener('mousemove', e => {
+      if (!currentFruit || !dragging || currentFruit.dropping) return;
+      const rect = canvas.getBoundingClientRect();
+      let x = e.clientX - rect.left;
+      x = Math.max(fruitRadius[0], Math.min(canvas.width - fruitRadius[0], x));
+      currentFruit.x = x;
+      currentFruit.y = fruitRadius[0]; // 드래그 중에만 y좌표 고정
+      draw();
+    });
+    canvas.addEventListener('mouseup', e => {
+      if (!currentFruit || !dragging || currentFruit.dropping) return;
+      dragging = false;
+      // 드롭 시 약간의 속도 부여, dropping 시작
+      currentFruit.vx = (Math.random() - 0.5) * 2;
+      currentFruit.vy = 2; // 반드시 낙하가 시작되도록!
+      // currentFruit.y = 40; // y좌표를 변경하지 않음
+      currentFruit.stopped = false;
+      currentFruit.dropping = true;
+    });
+    // 모바일 터치 지원
+    canvas.addEventListener('touchstart', e => {
+      if (!currentFruit || currentFruit.dropping) return;
+      dragging = true;
+      e.preventDefault();
+    });
+    canvas.addEventListener('touchmove', e => {
+      if (!currentFruit || !dragging || currentFruit.dropping) return;
+      const rect = canvas.getBoundingClientRect();
+      let x = e.touches[0].clientX - rect.left;
+      x = Math.max(fruitRadius[0], Math.min(canvas.width - fruitRadius[0], x));
+      currentFruit.x = x;
+      draw();
+      e.preventDefault();
+    });
+    canvas.addEventListener('touchend', e => {
+      if (!currentFruit || !dragging || currentFruit.dropping) return;
+      dragging = false;
+      currentFruit.vx = (Math.random() - 0.5) * 2;
+      currentFruit.vy = 2; // 반드시 낙하가 시작되도록!
+      // currentFruit.y = 40; // y좌표를 변경하지 않음
+      currentFruit.stopped = false;
+      currentFruit.dropping = true;
+      e.preventDefault();
+    });
+
+    function resetGame() {
+      fruits = [];
+      currentFruit = null;
+      score = 0;
+      isGameOver = false;
+      document.getElementById('score').textContent = score;
+      hideGameOverLayer();
+      draw();
+      spawnFruit();
+    }
+
+    // 게임 오버 체크(레이어로 표시)
+    function checkGameOver() {
+      for (const fruit of fruits) {
+        if (fruit.y - fruitRadius[fruit.type] < 0) {
+          isGameOver = true;
+          showGameOverLayer();
+          break;
+        }
+      }
+    }
+
+    function showGameOverLayer() {
+      document.getElementById('finalScore').textContent = score;
+      document.getElementById('gameOverLayer').style.display = 'flex';
+    }
+
+    function hideGameOverLayer() {
+      document.getElementById('gameOverLayer').style.display = 'none';
+    }
+
+    // 게임 루프
+    setInterval(() => {
+      if (!isGameOver) checkGameOver();
+    }, 500);
+
+    // 시작
+    resetGame();
+    requestAnimationFrame(gameLoop);
+
+    function toggleCustomImgMode() {
+      if (!useCustomImages) {
+        // 사진 모드로 전환: 파일 선택창 띄우기
+        document.getElementById('customImgInput').click();
+      } else {
+        // 이모지 모드로 전환
+        useCustomImages = false;
+        customFruitImages = Array(10).fill(null);
+        updateCustomImgBtn();
+        draw();
+      }
+    }
+
+    function updateCustomImgBtn() {
+      const txt = document.getElementById('toggleCustomImgText');
+      if (useCustomImages) {
+        txt.textContent = '다시 이모지로 플레이하기';
+      } else {
+        txt.textContent = '내가 원하는 사진으로 플레이하기';
+      }
+    }
+
+    function handleCustomImgUpload(e) {
+      const files = Array.from(e.target.files).slice(0, 10);
+      if (files.length !== 10) {
+        alert('사진을 10장 모두 선택해 주세요!');
+        return;
+      }
+      cropFiles = files;
+      cropIdx = 0;
+      cropImgs = Array(10).fill(null);
+      showCropModal();
+      e.target.value = '';
+    }
+
+    function showCropModal() {
+      if (cropIdx >= cropFiles.length) {
+        // 크롭 완료
+        customFruitImages = cropImgs.slice();
+        useCustomImages = true;
+        updateCustomImgBtn();
+        draw();
+        document.getElementById('cropModal').style.display = 'none';
+        return;
+      }
+      // 현재 파일 미리보기
+      const reader = new FileReader();
+      reader.onload = function(ev) {
+        const img = document.getElementById('cropImage');
+        img.src = ev.target.result;
+        img.onload = function() {
+          if (cropper) cropper.destroy();
+          cropper = new Cropper(img, {
+            aspectRatio: 1,
+            viewMode: 1,
+            dragMode: 'move',
+            background: false,
+            guides: false,
+            center: true,
+            autoCropArea: 1,
+            movable: true,
+            zoomable: true,
+            rotatable: false,
+            scalable: false,
+            cropBoxResizable: true,
+            cropBoxMovable: true,
+            minCropBoxWidth: 100,
+            minCropBoxHeight: 100,
+            ready() {
+              // 원형 가이드 오버레이
+              const cropperCanvas = img.closest('.cropper-container');
+              if (cropperCanvas) {
+                // 이미 오버레이가 있으면 제거
+                const oldOverlay = cropperCanvas.querySelector('.circle-overlay');
+                if (oldOverlay) oldOverlay.remove();
+                const overlay = document.createElement('div');
+                overlay.className = 'circle-overlay';
+                overlay.style.position = 'absolute';
+                overlay.style.left = '50%';
+                overlay.style.top = '50%';
+                overlay.style.transform = 'translate(-50%,-50%)';
+                overlay.style.width = '320px';
+                overlay.style.height = '320px';
+                overlay.style.borderRadius = '50%';
+                overlay.style.border = '2.5px dashed #7d5fff';
+                overlay.style.pointerEvents = 'none';
+                overlay.style.boxShadow = '0 0 0 9999px rgba(186,230,253,0.35)';
+                overlay.style.zIndex = '10';
+                cropperCanvas.appendChild(overlay);
+              }
+            }
+          });
+        };
+      };
+      reader.readAsDataURL(cropFiles[cropIdx]);
+      document.getElementById('cropStepText').textContent = `과일 ${cropIdx+1}번 이미지 영역을 지정해 주세요`;
+      document.getElementById('cropModal').style.display = 'flex';
+    }
+
+    function applyCrop() {
+      if (!cropper) return;
+      const canvas = cropper.getCroppedCanvas({ width: 320, height: 320, imageSmoothingQuality: 'high' });
+      // 원형 마스킹
+      const masked = document.createElement('canvas');
+      masked.width = masked.height = 320;
+      const ctx = masked.getContext('2d');
+      ctx.save();
+      ctx.beginPath();
+      ctx.arc(160, 160, 160, 0, Math.PI * 2);
+      ctx.closePath();
+      ctx.clip();
+      ctx.drawImage(canvas, 0, 0, 320, 320);
+      ctx.restore();
+      const img = new window.Image();
+      img.onload = function() {
+        cropImgs[cropIdx] = img;
+        cropIdx++;
+        showCropModal();
+      };
+      img.src = masked.toDataURL();
+    }
+
+    function skipCrop() {
+      cropImgs[cropIdx] = null;
+      cropIdx++;
+      showCropModal();
+    }
+  </script>
+</body>
+</html>
