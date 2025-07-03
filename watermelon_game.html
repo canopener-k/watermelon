@@ -22,13 +22,14 @@
       background: rgba(255,255,255,0.85);
       border-radius: 24px;
       box-shadow: 0 4px 24px #b2e6ff88, 0 1.5px 8px #f9e7fe44;
-      padding: 16px 8px 12px 8px;
+      padding: 24px 16px 18px 16px;
       position: relative;
     }
     h1 {
+      margin-top: 0.5em;
+      margin-bottom: 0.7em;
       text-align: center;
       color: #7d5fff;
-      margin-bottom: 8px;
       font-size: 1.3em;
       letter-spacing: 1px;
       font-family: 'Pretendard', 'Noto Sans KR', Arial, sans-serif;
@@ -38,7 +39,7 @@
       display: flex;
       justify-content: space-between;
       align-items: center;
-      margin-bottom: 10px;
+      margin-bottom: 1.1em;
       background: rgba(186, 230, 253, 0.45);
       border-radius: 12px;
       box-shadow: 0 1.5px 8px #b2e6ff33;
@@ -82,17 +83,16 @@
       aspect-ratio: 4/5;
       height: auto;
       max-height: 525px;
-    }
-    #gameCanvas:active {
-      box-shadow: 0 2px 8px #b2e6ff88;
+      margin-bottom: 0.7em;
     }
     @media (max-width: 500px) {
-      .container { max-width: 98vw; padding: 2vw 1vw 2vw 1vw; }
-      h1 { font-size: 1.05em; margin-bottom: 2vw; }
+      .container { max-width: 92vw; padding: 2vw 1vw 2vw 1vw; }
+      h1 { font-size: 1.05em; margin-bottom: 2vw; margin-top: 0.5em; }
       .scoreboard { font-size: 0.92em; padding: 2vw 2vw; margin-bottom: 1vw; }
       .score { font-size: 0.95em; }
       .reset-btn { font-size: 0.95em; padding: 4px 8vw; }
-      #gameCanvas { width: 96vw !important; max-width: 420px; aspect-ratio: 4/5; height: auto !important; max-height: 525px !important; }
+      #gameCanvas { width: 90vw !important; max-width: 380px; margin-bottom: 10px; }
+      .custom-img-bar { margin-top: 6px; margin-bottom: 10px; }
     }
     #gameOverLayer {
       position: absolute;
@@ -152,8 +152,8 @@
       display: flex;
       justify-content: center;
       align-items: center;
-      margin-top: 12px;
-      margin-bottom: 2px;
+      margin-top: 10px;
+      margin-bottom: 10px;
     }
     .custom-img-text {
       color: #7d5fff;
@@ -336,6 +336,26 @@
     let dragOriginOffsetX = 0;
     let dragOriginOffsetY = 0;
 
+    // HiDPI(고해상도) 캔버스 처리 함수
+    function resizeCanvasForHiDPI() {
+      // CSS 크기 기준
+      const cssWidth = canvas.clientWidth;
+      const cssHeight = canvas.clientHeight;
+      const dpr = window.devicePixelRatio || 1;
+      canvas.width = cssWidth * dpr;
+      canvas.height = cssHeight * dpr;
+      ctx.setTransform(1, 0, 0, 1, 0, 0);
+      ctx.scale(dpr, dpr);
+    }
+
+    // 최초 및 리사이즈 시 적용
+    window.addEventListener('resize', () => {
+      resizeCanvasForHiDPI();
+      draw();
+    });
+    // 최초 적용
+    resizeCanvasForHiDPI();
+
     function drawFruit(fruit) {
       let radius = fruitRadius[fruit.type];
       let y = Math.max(radius, Math.min(canvas.height - radius, fruit.y));
@@ -364,6 +384,8 @@
     }
 
     function draw() {
+      // HiDPI 스케일 적용 (혹시 리사이즈 후 draw만 호출될 때 대비)
+      resizeCanvasForHiDPI();
       ctx.clearRect(0, 0, canvas.width, canvas.height);
       for (const fruit of fruits) drawFruit(fruit);
       if (currentFruit) drawFruit(currentFruit);
