@@ -288,6 +288,10 @@
       <button class="crop-btn" onclick="openPhotoPicker()">사진첩 열기</button>
     </div>
   </div>
+  <!-- 오디오 태그 추가 -->
+  <audio id="bgm" src="Carefree.mp3" loop></audio>
+  <audio id="mergeSound" src="bell-ringing-05.mp3"></audio>
+  <audio id="failSound" src="fail-234710.mp3"></audio>
   <script>
     // 기본 과일 이미지(색상 원으로 대체)
     const fruitColors = ["#f7e967", "#f9b233", "#ff7f50", "#ff4e50", "#a3e048", "#4ecdc4", "#3aaf85", "#2e86de", "#8e44ad", "#2d3436"];
@@ -404,7 +408,7 @@
       fruit.x += fruit.vx;
       fruit.y += fruit.vy;
       // stopped 상태여도 겹침 해소 반응은 항상 실행 (여러 번 반복)
-      for (let rep = 0; rep < 12; rep++) { // 기존 20에서 12로 줄임
+      for (let rep = 0; rep < 12; rep++) { // rep 12로 복구
         for (const other of fruits) {
           if (other === fruit) continue;
           const dx = fruit.x - other.x;
@@ -623,11 +627,11 @@
       if (!currentFruit || currentFruit.dropping) return;
       if (e.key === 'ArrowLeft') {
         leftPressed = true;
-        e.preventDefault(); // 커서 이동 방지
+        e.preventDefault();
       }
       if (e.key === 'ArrowRight') {
         rightPressed = true;
-        e.preventDefault(); // 커서 이동 방지
+        e.preventDefault();
       }
       if (e.key === ' ' || e.key === 'Spacebar') {
         e.preventDefault();
@@ -675,12 +679,8 @@
         }
       }
       draw();
-      // 연쇄 합체 프레임 분리
-      if (mergeFruitsPending || mergeFruits()) {
-        mergeFruitsPending = false;
-        requestAnimationFrame(gameLoop);
-        return;
-      }
+      // mergeFruits를 매 프레임마다 호출
+      mergeFruits();
       requestAnimationFrame(gameLoop);
     }
 
@@ -717,7 +717,7 @@
             const dx = fruits[i].x - fruits[j].x;
             const dy = fruits[i].y - fruits[j].y;
             const dist = Math.sqrt(dx*dx + dy*dy);
-            if (dist < fruitRadius[fruits[i].type] + fruitRadius[fruits[j].type] + 8) {
+            if (dist < fruitRadius[fruits[i].type] + fruitRadius[fruits[j].type] + 16) { // 합체 거리 16으로 완화
               // 합체 직전, 기존 두 과일에 반대 방향 속도 살짝 부여
               const angle = Math.atan2(dy, dx);
               const bounceSpeed = 1;
@@ -761,7 +761,9 @@
               document.getElementById('score').textContent = score;
               draw();
               mergeCooldown = true;
-              setTimeout(() => { mergeCooldown = false; }, 600); // 600ms 쿨타임
+              setTimeout(() => { mergeCooldown = false; }, 400); // 400ms로 단축
+              document.getElementById('mergeSound').currentTime = 0;
+              document.getElementById('mergeSound').play();
               return true;
             }
           }
@@ -830,6 +832,10 @@
       document.getElementById('score').textContent = score;
       hideGameOverLayer();
       draw();
+      // 배경음악 재생
+      const bgm = document.getElementById('bgm');
+      bgm.currentTime = 0;
+      bgm.play();
       spawnFruit();
     }
 
@@ -848,6 +854,9 @@
     function showGameOverLayer() {
       document.getElementById('finalScore').textContent = score;
       document.getElementById('gameOverLayer').style.display = 'flex';
+      document.getElementById('failSound').currentTime = 0;
+      document.getElementById('failSound').play();
+      document.getElementById('bgm').pause();
     }
 
     function hideGameOverLayer() {
@@ -1051,6 +1060,21 @@
     // 사진 선택 후, 크롭 모달이 뜨지 않으면 안내 모달 닫기
     document.getElementById('customImgInput').addEventListener('click', function() {
       document.getElementById('selectPhotoModal').style.display = 'none';
+    });
+
+    // BGM 재생 보장: 다양한 이벤트에서 play 시도, 에러 무시
+    function tryPlayBgm() {
+      const bgm = document.getElementById('bgm');
+      if (bgm && bgm.paused) {
+        bgm.currentTime = 0;
+        const playPromise = bgm.play();
+        if (playPromise !== undefined) {
+          playPromise.catch(() => {});
+        }
+      }
+    }
+    ['pointerdown', 'touchstart', 'mousedown', 'keydown'].forEach(eventType => {
+      window.addEventListener(eventType, tryPlayBgm, { once: true });
     });
   </script>
 </body>
