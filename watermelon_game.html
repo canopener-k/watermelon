@@ -246,6 +246,30 @@
       font-size: 0.98em;
       font-weight: bold;
     }
+    .audio-controls {
+      text-align: center;
+      margin-bottom: 14px;
+    }
+    .pretty-btn {
+      background: linear-gradient(90deg, #b2e6ff 0%, #f9e7fe 100%);
+      color: #7d5fff;
+      border: none;
+      border-radius: 10px;
+      padding: 2px 8px;
+      font-size: 0.88em;
+      font-weight: bold;
+      cursor: pointer;
+      margin: 0 2px;
+      min-width: 54px;
+      box-shadow: 0 2px 8px #b2e6ff33;
+      transition: background 0.2s, color 0.2s, transform 0.1s;
+      line-height: 1.2;
+    }
+    .pretty-btn:hover, .pretty-btn:active {
+      background: linear-gradient(90deg, #f9e7fe 0%, #b2e6ff 100%);
+      color: #00b894;
+      transform: scale(1.06);
+    }
   </style>
 </head>
 <body>
@@ -287,6 +311,11 @@
       <div class="crop-step" style="margin-bottom:18px;">사진 10장을 선택해 주세요</div>
       <button class="crop-btn" onclick="openPhotoPicker()">사진첩 열기</button>
     </div>
+  </div>
+  <!-- 오디오 On/Off 버튼 추가 -->
+  <div class="audio-controls">
+    <button id="bgmToggleBtn" class="pretty-btn">BGM<br>OFF</button>
+    <button id="sfxToggleBtn" class="pretty-btn">효과음<br>OFF</button>
   </div>
   <!-- 오디오 태그 추가 -->
   <audio id="bgm" src="Carefree.mp3" loop></audio>
@@ -690,7 +719,7 @@
       const fruitType = Math.floor(Math.random() * (maxType + 1));
       currentFruit = {
         x: canvas.width / 2,
-        y: fruitRadius[0],
+        y: fruitRadius[0] + 30,
         type: fruitType,
         vx: 0,
         vy: 2,
@@ -762,8 +791,10 @@
               draw();
               mergeCooldown = true;
               setTimeout(() => { mergeCooldown = false; }, 400); // 400ms로 단축
-              document.getElementById('mergeSound').currentTime = 0;
-              document.getElementById('mergeSound').play();
+              if (sfxOn) {
+                document.getElementById('mergeSound').currentTime = 0;
+                document.getElementById('mergeSound').play();
+              }
               return true;
             }
           }
@@ -854,8 +885,10 @@
     function showGameOverLayer() {
       document.getElementById('finalScore').textContent = score;
       document.getElementById('gameOverLayer').style.display = 'flex';
-      document.getElementById('failSound').currentTime = 0;
-      document.getElementById('failSound').play();
+      if (sfxOn) {
+        document.getElementById('failSound').currentTime = 0;
+        document.getElementById('failSound').play();
+      }
       document.getElementById('bgm').pause();
     }
 
@@ -1076,6 +1109,20 @@
     ['pointerdown', 'touchstart', 'mousedown', 'keydown'].forEach(eventType => {
       window.addEventListener(eventType, tryPlayBgm, { once: true });
     });
+
+    let bgmOn = true;
+    let sfxOn = true;
+    document.getElementById('bgmToggleBtn').onclick = function() {
+      bgmOn = !bgmOn;
+      document.getElementById('bgm').muted = !bgmOn;
+      this.innerHTML = bgmOn ? 'BGM<br>OFF' : 'BGM<br>ON';
+    };
+    document.getElementById('sfxToggleBtn').onclick = function() {
+      sfxOn = !sfxOn;
+      document.getElementById('mergeSound').muted = !sfxOn;
+      document.getElementById('failSound').muted = !sfxOn;
+      this.innerHTML = sfxOn ? '효과음<br>OFF' : '효과음<br>ON';
+    };
   </script>
 </body>
 </html>
